@@ -24,7 +24,7 @@ class CursorPagination:
     page_size: int = 15
     order_by: str = "-id"
 
-    def get_cursor_rows(self, table: t.Type[Table], request: Request):
+    async def get_cursor_rows(self, table: t.Type[Table], request: Request):
         # headers to adding next_cursor
         headers: t.Dict[str, str] = {}
 
@@ -50,13 +50,13 @@ class CursorPagination:
                         .order_by(table._meta.primary_key, ascending=False)
                         .limit(self.page_size)
                     )
-                    rows = query.run_sync()
+                    rows = await query.run()
                     try:
                         # set new value to next_cursor
                         next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                         headers["cursor"] = next_cursor
                         # return empty cursor if no more results
-                        last_row = table.select().limit(1).first().run_sync()
+                        last_row = await table.select().limit(1).first().run()
                         if (
                             self.decode_cursor(next_cursor, table)
                             == last_row["id"]
@@ -69,7 +69,7 @@ class CursorPagination:
                 query = query.where(
                     table._meta.primary_key >= int(decoded_cursor)
                 ).limit(self.page_size + 1)
-                rows = query.run_sync()
+                rows = await query.run()
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
@@ -96,18 +96,18 @@ class CursorPagination:
                         .order_by(table._meta.primary_key, ascending=True)
                         .limit(self.page_size)
                     )
-                    rows = query.run_sync()
+                    rows = await query.run()
                     try:
                         # set new value to next_cursor
                         next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                         headers["cursor"] = next_cursor
                         # return empty cursor if no more results
-                        last_row = (
+                        last_row = await (
                             table.select()
                             .limit(1)
                             .order_by(table._meta.primary_key, ascending=False)
                             .first()
-                            .run_sync()
+                            .run()
                         )
                         if (
                             self.decode_cursor(next_cursor, table)
@@ -121,7 +121,7 @@ class CursorPagination:
                 query = query.where(
                     table._meta.primary_key <= int(decoded_cursor)
                 ).limit(self.page_size + 1)
-                rows = query.run_sync()
+                rows = await query.run()
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor

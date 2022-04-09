@@ -24,7 +24,7 @@ app = FastAPI()
 
 
 @app.get("/movies/")
-def movies(
+async def movies(
     request: Request,
     __cursor: str,
     __previous: t.Optional[str] = None,
@@ -32,8 +32,10 @@ def movies(
     try:
         cursor = request.query_params["__cursor"]
         paginator = CursorPagination(cursor=cursor, page_size=1, order_by="id")
-        rows_result, headers_result = paginator.get_cursor_rows(Movie, request)
-        rows = rows_result.run_sync()
+        rows_result, headers_result = await paginator.get_cursor_rows(
+            Movie, request
+        )
+        rows = await rows_result.run()
         headers = headers_result
         response = JSONResponse(
             {"rows": rows[::-1]},
@@ -44,8 +46,10 @@ def movies(
     except KeyError:
         cursor = request.query_params["__cursor"]
         paginator = CursorPagination(cursor=cursor, page_size=1, order_by="id")
-        rows_result, headers_result = paginator.get_cursor_rows(Movie, request)
-        rows = rows_result.run_sync()
+        rows_result, headers_result = await paginator.get_cursor_rows(
+            Movie, request
+        )
+        rows = await rows_result.run()
         headers = headers_result
         response = JSONResponse(
             {"rows": rows},
