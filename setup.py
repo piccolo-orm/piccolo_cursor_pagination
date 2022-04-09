@@ -23,8 +23,10 @@ setuptools.setup(
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
-    package_dir={"": "piccolo_cursor_pagination"},
+    packages=["piccolo_cursor_pagination"],
+    package_data={
+        "piccolo_cursor_pagination": ["py.typed"],
+    },
     install_requires=["fastapi", "piccolo"],
-    packages=setuptools.find_packages(where="piccolo_cursor_pagination"),
     python_requires=">=3.7",
 )
