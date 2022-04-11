@@ -45,10 +45,9 @@ async def tasks(
     __previous: t.Optional[str] = None,
 ):
     try:
-        cursor = request.query_params["__cursor"]
         previous = request.query_params["__previous"]
         paginator = CursorPagination(
-            cursor=cursor, page_size=10, order_by="id"
+            cursor=__cursor, page_size=10, order_by="id"
         )
         rows_result, headers_result = await paginator.get_cursor_rows(
             Task, request
@@ -62,9 +61,8 @@ async def tasks(
             },
         )
     except KeyError:
-        cursor = request.query_params["__cursor"]
         paginator = CursorPagination(
-            cursor=cursor, page_size=10, order_by="id"
+            cursor=__cursor, page_size=10, order_by="id"
         )
         rows_result, headers_result = await paginator.get_cursor_rows(
             Task, request
