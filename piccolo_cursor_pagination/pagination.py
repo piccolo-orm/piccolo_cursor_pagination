@@ -24,7 +24,7 @@ class CursorPagination:
     page_size: int = 15
     order_by: str = "-id"
 
-    def get_cursor_rows(self, table: t.Type[Table], request: Request):
+    async def get_cursor_rows(self, table: t.Type[Table], request: Request):
         # headers to adding next_cursor
         headers: t.Dict[str, str] = {}
 
@@ -37,7 +37,7 @@ class CursorPagination:
             query = query.limit(self.page_size + 1)
 
             # decoded query params cursor
-            decoded_cursor = self.decode_cursor(self.cursor, table)
+            decoded_cursor = await self.decode_cursor(self.cursor, table)
 
             try:
                 # preform operation if previous in query params
@@ -50,15 +50,15 @@ class CursorPagination:
                         .order_by(table._meta.primary_key, ascending=False)
                         .limit(self.page_size)
                     )
-                    rows = query.run_sync()
+                    rows = await query.run()
                     try:
                         # set new value to next_cursor
                         next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                         headers["cursor"] = next_cursor
                         # return empty cursor if no more results
-                        last_row = table.select().limit(1).first().run_sync()
+                        last_row = await table.select().limit(1).first().run()
                         if (
-                            self.decode_cursor(next_cursor, table)
+                            await self.decode_cursor(next_cursor, table)
                             == last_row["id"]
                         ):
                             headers["cursor"] = ""
@@ -69,7 +69,7 @@ class CursorPagination:
                 query = query.where(
                     table._meta.primary_key >= int(decoded_cursor)
                 ).limit(self.page_size + 1)
-                rows = query.run_sync()
+                rows = await query.run()
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
@@ -83,7 +83,7 @@ class CursorPagination:
             query = query.limit(self.page_size + 1)
 
             # decoded query params cursor
-            decoded_cursor = self.decode_cursor(self.cursor, table)
+            decoded_cursor = await self.decode_cursor(self.cursor, table)
 
             try:
                 # preform operation if previous in query params
@@ -96,21 +96,21 @@ class CursorPagination:
                         .order_by(table._meta.primary_key, ascending=True)
                         .limit(self.page_size)
                     )
-                    rows = query.run_sync()
+                    rows = await query.run()
                     try:
                         # set new value to next_cursor
                         next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                         headers["cursor"] = next_cursor
                         # return empty cursor if no more results
-                        last_row = (
+                        last_row = await (
                             table.select()
                             .limit(1)
                             .order_by(table._meta.primary_key, ascending=False)
                             .first()
-                            .run_sync()
+                            .run()
                         )
                         if (
-                            self.decode_cursor(next_cursor, table)
+                            await self.decode_cursor(next_cursor, table)
                             == last_row["id"]
                         ):
                             headers["cursor"] = ""
@@ -121,7 +121,7 @@ class CursorPagination:
                 query = query.where(
                     table._meta.primary_key <= int(decoded_cursor)
                 ).limit(self.page_size + 1)
-                rows = query.run_sync()
+                rows = await query.run()
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
@@ -134,17 +134,17 @@ class CursorPagination:
         base64_bytes = base64.b64encode(cursor_bytes)
         return base64_bytes.decode("ascii")
 
-    def decode_cursor(self, cursor: str, table: t.Type[Table]) -> int:
+    async def decode_cursor(self, cursor: str, table: t.Type[Table]) -> int:
+        if cursor is None:
+            cursor = ""
         base64_bytes = cursor.encode("ascii")
         cursor_bytes = base64.b64decode(base64_bytes)
-        # we provide initial cursor like this because
-        # we cannot pass empty string to FastAPI openapi
-        initial_cursor = (
+        initial_cursor = await (
             table.select()
             .order_by(table._meta.primary_key, ascending=False)
             .limit(1)
             .first()
-            .run_sync()
+            .run()
         )
         return (
             int(cursor_bytes.decode("ascii") or 0)

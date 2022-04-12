@@ -31,14 +31,15 @@ TaskModelOut: t.Any = create_pydantic_model(
 @app.get("/tasks/", response_model=t.List[TaskModelOut])
 async def tasks(
     request: Request,
-    __cursor: str,
+    __cursor: t.Optional[str] = None,
     __previous: t.Optional[str] = None,
 ):
     try:
-        cursor = request.query_params["__cursor"]
         previous = request.query_params["__previous"]
-        paginator = CursorPagination(cursor=cursor)
-        rows_result, headers_result = paginator.get_cursor_rows(Task, request)
+        paginator = CursorPagination(cursor=__cursor)
+        rows_result, headers_result = await paginator.get_cursor_rows(
+            Task, request
+        )
         rows = await rows_result.run()
         headers = headers_result
         response = JSONResponse(
@@ -48,9 +49,10 @@ async def tasks(
             },
         )
     except KeyError:
-        cursor = request.query_params["__cursor"]
-        paginator = CursorPagination(cursor=cursor)
-        rows_result, headers_result = paginator.get_cursor_rows(Task, request)
+        paginator = CursorPagination(cursor=__cursor)
+        rows_result, headers_result = await paginator.get_cursor_rows(
+            Task, request
+        )
         rows = await rows_result.run()
         headers = headers_result
         response = JSONResponse(
