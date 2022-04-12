@@ -41,7 +41,7 @@ TaskModelOut: t.Any = create_pydantic_model(
 @app.get("/tasks/", response_model=t.List[TaskModelOut])
 async def tasks(
     request: Request,
-    __cursor: str,
+    __cursor: t.Optional[str] = None,
     __previous: t.Optional[str] = None,
 ):
     try:

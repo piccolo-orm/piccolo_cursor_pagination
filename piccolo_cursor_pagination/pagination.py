@@ -135,10 +135,10 @@ class CursorPagination:
         return base64_bytes.decode("ascii")
 
     async def decode_cursor(self, cursor: str, table: t.Type[Table]) -> int:
+        if cursor is None:
+            cursor = ""
         base64_bytes = cursor.encode("ascii")
         cursor_bytes = base64.b64decode(base64_bytes)
-        # we provide initial cursor like this because
-        # we cannot pass empty string to FastAPI openapi
         initial_cursor = await (
             table.select()
             .order_by(table._meta.primary_key, ascending=False)
