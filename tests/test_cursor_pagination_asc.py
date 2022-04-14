@@ -79,7 +79,7 @@ class TestCursorPaginationAsc(TestCase):
         client = TestClient(app)
         response = client.get("/movies/", params={"__cursor": ""})
         self.assertTrue(response.status_code, 200)
-        self.assertEqual(response.headers["next_cursor"], "Mg==")
+        self.assertEqual(response.headers["next_cursor"], "MQ==")
         self.assertEqual(
             response.json(),
             {

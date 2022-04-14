@@ -73,7 +73,21 @@ class CursorPagination:
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
-
+                # if the last_row of whole data tset is in rows, it means that
+                # there are no more results, then we must use the first item
+                # in the rows to get the correct result of the previous rows
+                last_row = await (
+                    table.select()
+                    .limit(1)
+                    .order_by(table._meta.primary_key, ascending=False)
+                    .first()
+                    .run()
+                )
+                if (
+                    await self.decode_cursor(next_cursor, table)
+                    == last_row["id"]
+                ):
+                    headers["cursor"] = self.encode_cursor(str(rows[0]["id"]))
         else:
             # query where limit is equal to page_size plus
             # one in DESC order
@@ -125,6 +139,15 @@ class CursorPagination:
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
+                # if the last_row of whole data set is in rows, it means that
+                # there are no more results, then we must use the first item
+                # in the rows to get the correct result of the previous rows
+                last_row = await (table.select().limit(1).first().run())
+                if (
+                    await self.decode_cursor(next_cursor, table)
+                    == last_row["id"]
+                ):
+                    headers["cursor"] = self.encode_cursor(str(rows[0]["id"]))
 
         query = query.limit(self.page_size)
         return query, headers
