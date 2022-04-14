@@ -73,7 +73,7 @@ class CursorPagination:
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
-                # if the last_row of whole data tset is in rows, it means that
+                # if the last_row of whole data set is in rows, it means that
                 # there are no more results, then we must use the first item
                 # in the rows to get the correct result of the previous rows
                 last_row = await (
