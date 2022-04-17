@@ -84,7 +84,7 @@ The ``CursorPagination`` stores the value of ``next_cursor`` in the response hea
 We can then use the ``next_cursor`` value to get new set of results by passing 
 ``next_cursor`` to ``__cursor`` query parameter.
 
-Full Piccolo ASGI app is in **example** folder.
+Full Piccolo ASGI app is in **example** folder or you can check [another example](https://github.com/sinisaos/piccolo-cursor-vue) with Vue frontend.
 
 # Customization
 
@@ -94,7 +94,7 @@ but we can overide this value in constructor to adjust the way the results are d
 Example of displaying results in ascending order and page size is 10:
 
 ```python
-paginator = CursorPagination(cursor=cursor, page_size=10, order_by="id")
+paginator = CursorPagination(cursor=__cursor, page_size=10, order_by="id")
 ```
 
 # Directions
