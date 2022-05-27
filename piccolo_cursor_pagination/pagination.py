@@ -27,11 +27,12 @@ class CursorPagination:
     async def get_cursor_rows(self, table: t.Type[Table], request: Request):
         # headers to adding next_cursor
         headers: t.Dict[str, str] = {}
+        all_columns: t.Any = table.all_columns()
 
         if self.order_by == "id":
             # query where limit is equal to page_size plus
             # one in ASC order
-            query = table.select().order_by(
+            query = table.select(all_columns, table.get_readable()).order_by(
                 table._meta.primary_key, ascending=True
             )
             query = query.limit(self.page_size + 1)
@@ -73,25 +74,12 @@ class CursorPagination:
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
-                # if the last_row of whole data set is in rows, it means that
-                # there are no more results, then we must use the first item
-                # in the rows to get the correct result of the previous rows
-                last_row = await (
-                    table.select()
-                    .limit(1)
-                    .order_by(table._meta.primary_key, ascending=False)
-                    .first()
-                    .run()
-                )
-                if (
-                    await self.decode_cursor(next_cursor, table)
-                    == last_row["id"]
-                ):
+                if len(rows) <= self.page_size:
                     headers["cursor"] = self.encode_cursor(str(rows[0]["id"]))
         else:
             # query where limit is equal to page_size plus
             # one in DESC order
-            query = table.select().order_by(
+            query = table.select(all_columns, table.get_readable()).order_by(
                 table._meta.primary_key, ascending=False
             )
             query = query.limit(self.page_size + 1)
@@ -139,14 +127,7 @@ class CursorPagination:
                 # set new value to next_cursor
                 next_cursor = self.encode_cursor(str(rows[-1]["id"]))
                 headers["cursor"] = next_cursor
-                # if the last_row of whole data set is in rows, it means that
-                # there are no more results, then we must use the first item
-                # in the rows to get the correct result of the previous rows
-                last_row = await (table.select().limit(1).first().run())
-                if (
-                    await self.decode_cursor(next_cursor, table)
-                    == last_row["id"]
-                ):
+                if len(rows) <= self.page_size:
                     headers["cursor"] = self.encode_cursor(str(rows[0]["id"]))
 
         query = query.limit(self.page_size)
